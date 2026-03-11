@@ -2,6 +2,7 @@ import chromadb
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
 import json
+import re
 
 def build_index(
     papers: list,
@@ -39,11 +40,24 @@ def build_index(
         for i, chunk in enumerate(chunks):
 
             cleaned = chunk.strip()
-            if len(cleaned) < 50:
+
+            # 1. 너무 짧은 청크 제거
+            if len(cleaned) < 100:
                 continue
+
+            # 2. 알파벳이 하나도 없는 청크 제거 (숫자/특수문자만 있는 경우)
             if not any(c.isalpha() for c in cleaned):
                 continue
-            
+
+            # 3. URL만 있거나 너무 짧은 청크 제거
+            if re.search(r'https?://\S+', cleaned) and len(cleaned) < 200:
+                continue
+
+            # 4. 알파벳 비율 30% 미만 (수식, 기호)
+            alpha_ratio = sum(c.isalpha() for c in cleaned) / len(cleaned)
+            if alpha_ratio < 0.3:
+                continue
+
             all_chunks.append(chunk)
             all_ids.append(f"{paper['id']}_{i}")
             all_metadatas.append({
