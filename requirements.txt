@@ -9,3 +9,4 @@ streamlit
 python-dotenv
 tqdm
 langchain-text-splitters
+rank-bm25
