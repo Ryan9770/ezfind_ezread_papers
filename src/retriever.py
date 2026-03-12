@@ -1,6 +1,6 @@
 import chromadb
 from langchain_ollama import OllamaEmbeddings, OllamaLLM
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 PROMPT_TEMPLATE = """
 아래 논문 내용을 바탕으로 질문에 답해줘.
