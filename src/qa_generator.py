@@ -70,18 +70,36 @@ def generate_qa_dataset(
         chunk = all_chunks[i]
         meta = all_metadatas[i]
 
+        response = chain.invoke({"context": chunk})
+        
+        # 1차 : 정상 JSON 파싱 시도
         try:
-            response = chain.invoke({"context": chunk})
-
-            # JSON 파싱
             # 응답에서 { } 부분만 추출
             start = response.find("{")
             end = response.rfind("}") + 1
             if start == -1 or end == 0:
                 failed += 1
                 continue
-
-            qa = json.loads(response[start:end])
+            raw = response[start:end]
+            qa = json.loads(raw)
+        except json.JSONDecodeError:
+            # 2차: 줄바꿈 제거 후 재시도
+            try:
+                cleaned = raw.replace("\n", " ").replace("\r", "")
+                qa = json.loads(cleaned)
+            except json.JSONDecodeError:
+                # 3차: question/answer 값을 정규식으로 직접 추출
+                import re
+                q_match = re.search(r'"question"\s*:\s*"([^"]+)"', response)
+                a_match = re.search(r'"answer"\s*:\s*"([^"]+)"', response)
+                if q_match and a_match:
+                    qa = {
+                        "question": q_match.group(1),
+                        "answer": a_match.group(1)
+                    }
+                else:
+                    failed += 1
+                    continue
 
             if "question" not in qa or "answer" not in qa:
                 failed += 1
