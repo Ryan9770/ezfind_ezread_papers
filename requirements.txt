@@ -10,3 +10,6 @@ python-dotenv
 tqdm
 langchain-text-splitters
 rank-bm25 # 키워드 서치
+ragas
+datasets 
+anthropic
